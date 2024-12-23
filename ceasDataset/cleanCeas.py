@@ -1,48 +1,49 @@
 import pandas as pd
 import os
 import re
-import nltk
-from nltk.corpus import stopwords
-from bs4 import BeautifulSoup
-import spacy
+from datetime import datetime
 
-#   Download stopwords from NLTK
-nltk.download( 'stopwords' )
-nltk.download( 'punkt' )
-
-#   Load english language model from SpaCy
-nlp = spacy.load( "en_core_web_sm" )
-
-def CleanEmailText( text ):
-	''' Clean email data
+def extract_emails( text ):
+	'''	Extract emails from string
 	'''
 
-	#   1. Remove HTML tags
-	text = BeautifulSoup( text, "html.parser" ).get_text()
-	
-	#   2. Convert alphabet to lower
-	text = text.lower()
-	
-	#   3. Remove URL
-	text = re.sub( r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE )
-	
-	#   4. Remove email address
-	text = re.sub( r'\S*@\S*\s?', '', text )
-	
-	#   5. Remove special character and number
-	text = re.sub( r'\d+', '', text )  # Remove number
-	text = re.sub( r'[^\w\s]', '', text )  # Remove space
-	
-	#   6. Remove Stopwords
-	stop_words = set( stopwords.words( 'english' ) )
-	word_tokens = nltk.word_tokenize(text)
-	text = ' '.join( [ word for word in word_tokens if word not in stop_words ] )
-	
-	#   7. Tokenization and Lemmatization by SpaCy
-	doc = nlp( text )
-	text = ' '.join( [ token.lemma_ for token in doc ] )  # ลดคำเป็นรากฐาน
-	
-	return text
+	if type( text ) is not str:
+		return []
+
+	#	Define the regular expression for email extraction
+	email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+
+	#	Find all matches of the pattern in the text
+	emails = re.findall( email_pattern, text )
+
+	return emails
+
+def convert_date( date_str ):
+	'''	Convert date string
+	'''
+
+	try:
+
+		#	Parse the input date string with the given format
+		parsed_date = datetime.strptime( date_str, '%a, %d %b %Y %H:%M:%S %z' )
+
+	except ValueError:
+		return None
+
+	#	Convert to desired format 'YYYY-MM-DD'
+	return parsed_date.strftime('%Y-%m-%d')
+
+def extract_urls( text ):
+	'''	Extract urls from string
+	'''
+
+	#	Define the regular expression for URL extraction
+	url_pattern = r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?=%.]+'
+
+	#	Find all matches of the pattern in the text
+	urls = re.findall(url_pattern, text)
+
+	return urls
 
 def CleanDataset( fileNumber: int ):
 	''' Clean email text
@@ -54,7 +55,7 @@ def CleanDataset( fileNumber: int ):
 
 	#   Get input / output file path
 	inputPath = f'/data/users/fengwwta/SeniorProject/ceasDataset/orig/{inputFileName}'
-	outputPath = f'/data/users/fengwwta/SeniorProject/ceasDataset/clean/{outputFileName}'
+	outputPath = f'/data/users/fengwwta/SeniorProject/ceasDataset/newClean/{outputFileName}'
 
 	#   Check if path is exist
 	if not os.path.exists( inputPath ):
@@ -63,16 +64,28 @@ def CleanDataset( fileNumber: int ):
 	#   Read CSV
 	df = pd.read_csv( inputPath )
 
-	#   Clean email text in dataset
-	cleanTexts = pd.Series( index = df.body.index )
-	for row, text in enumerate( df.body ): 
-		if row % 1000 == 0:
-			print( f'\tRow: {row}' )
-		cleanTexts[ row ] = CleanEmailText( text )
+	# #   Clean email text in dataset
+	# cleanTexts = pd.Series( index = df.body.index )
+
+	senderAddr = pd.Series( index = df.sender.index )
+	receiverAddr = pd.Series( index = df.receiver.index )
+	convDate = pd.Series( index = df.date.index )
+	urllinks = pd.Series( index = df.body.index )
+
+	for row, _ in enumerate( df.body ): 
+		# if row % 1000 == 0:
+		print( f'\tRow: {row}' )
+		
+		senderAddr[ row ] = extract_emails( df.sender[ row ] )
+		receiverAddr[ row ] = extract_emails( df.receiver[ row ] )
+		convDate[ row ] = convert_date( df.date[ row ] )
+		urllinks[ row ] = extract_urls( df.body[ row ] )
 
 	#   Create clean text serie and drop text serie
-	df[ 'cleanBody' ] = cleanTexts
-	df = df.drop( [ 'body' ], axis = 1 )
+	df[ 'sender' ] = senderAddr
+	df[ 'receiver' ] = receiverAddr
+	df[ 'date' ] = convDate
+	df[ 'url_link' ] = urllinks
 
 	# 	Create new CSV
 	df.to_csv( outputPath, sep = ',', index = False, encoding = 'utf-8' )
