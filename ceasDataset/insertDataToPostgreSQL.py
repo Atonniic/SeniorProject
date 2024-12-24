@@ -1,6 +1,7 @@
 import pandas as pd
 import psycopg2
 import ast  # ใช้สำหรับแปลง string เป็น list (ในกรณีที่ urlLinks เก็บในรูปแบบ string)
+from datetime import datetime
 
 try:
     # เชื่อมต่อกับ PostgreSQL
@@ -14,11 +15,11 @@ try:
     conn.autocommit = False
 
     # อ่านข้อมูลจาก CSV
-    csv_file_path = r"D:\SeniorProject\ceasDataset\newClean\cleanCEAS01.csv"
+    csv_file_path = r"D:\SeniorProject\ceasDataset\newClean\cleanCEAS04.csv"
     df = pd.read_csv(csv_file_path)
 
     # เลือกเฉพาะ 100 แถวแรก
-    df = df.head(100)
+    # df = df.head(100)
 
     # เตรียมข้อมูล
     rows_to_insert = []
@@ -37,10 +38,18 @@ try:
         else:
             receiver = row['receiver']
 
+        # ตรวจสอบและแปลง date
         date = row['date']
+        try:
+            # แปลง date เป็น datetime หากเป็นรูปแบบ YYYY-MM-DD
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            # กรณีที่ date ไม่มีค่าหรือไม่ถูกต้อง
+            date = None
+            
         subject = row['subject']
         label = row['label']
-        url_links = row['urlLinks']
+        url_links = row['url_link']
 
         # ตรวจสอบและแปลง urlLinks
         urls = ast.literal_eval(url_links) if isinstance(url_links, str) and url_links.startswith("[") else [url_links]
