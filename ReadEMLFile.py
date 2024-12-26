@@ -1,6 +1,6 @@
 from email import policy
 from email.parser import BytesParser
-from geolite2 import geolite2
+import geoip2.database
 import argparse
 import re
 from bs4 import BeautifulSoup
@@ -36,17 +36,15 @@ def getSenderIP(msg):
         
 def getLocations(ip_addresses):
     '''Get the location of the IP addresses.'''
+        
+    reader = geoip2.database.Reader('GeoLite2-City_20241224/GeoLite2-City.mmdb')
+    response = reader.city(ip_addresses)
     
-    reader = geolite2.reader()
-    location = reader.get( ip_addresses )
-    
-    if location:
-        location = f"Country: {location['country']['names']['en']}"
+    if response:
+        location = response.country.name
     else:
         location = None
-        
-    geolite2.close()
-    
+            
     return location
     
 def getBody(msg):
@@ -89,14 +87,14 @@ def parse_eml(file_path):
     with open(file_path, 'rb') as eml_file:
         msg = BytesParser(policy=policy.default).parse(eml_file)
 
-    print(f"From -> {msg['From']}")
-    print(f"To -> {msg['To']}")
-    print(f"Subject -> {msg['Subject']}")
-    print(f"Date -> {msg['Date']}")
+    print(f"From        -> {msg['From']}")
+    print(f"To          -> {msg['To']}")
+    print(f"Subject     -> {msg['Subject']}")
+    print(f"Date        -> {msg['Date']}")
     print(f"Sender's IP -> {getSenderIP(msg)[1] if getSenderIP(msg)[0] else 'No IP found'}")
-    print(f"Locations -> {getLocations(getSenderIP(msg)[1]) if getSenderIP(msg)[0] else 'No location found'}")
-    print(f"Body ->\n{getBody(msg) if getBody(msg) else 'No body found'}")
-    print(f"URLs -> {extract_urls(getBody(msg)) if getBody(msg) else 'No URLs found'}")
+    print(f"Locations   -> {getLocations(getSenderIP(msg)[1]) if getSenderIP(msg)[0] else 'No location found'}")
+    print(f"URLs        -> {extract_urls(getBody(msg)) if getBody(msg) else 'No URLs found'}")
+    print(f"Body        ->\n{getBody(msg) if getBody(msg) else 'No body found'}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract information from a .eml file.")
