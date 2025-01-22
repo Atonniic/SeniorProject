@@ -11,7 +11,7 @@ export default function Page() {
         body: '',
     });
 
-    const [result, setResult] = useState<{ error?: string;[key: string]: any } | null>(null);
+    const [result, setResult] = useState<{ error?: string; data?: object } | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
