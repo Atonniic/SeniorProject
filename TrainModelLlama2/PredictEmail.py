@@ -39,7 +39,8 @@ inputs = tokenizer(
 )
 
 print("Input IDs:", inputs["input_ids"])
-vocab_size = tokenizer.vocab_size
+# vocab_size = tokenizer.vocab_size
+vocab_size = len( tokenizer )
 print("Vocab Size:", vocab_size)
 
 if (inputs["input_ids"] >= vocab_size).any():
@@ -50,8 +51,15 @@ else:
 # ดูขนาด vocab_size ของโมเดล
 print("Model vocab size:", model.config.vocab_size)
 
+# print( 'tokenizer:', tokenizer.vocab_size )
+# print( 'model:', model.config.vocab_size )
+# print( 'tokenizer:', len( tokenizer ) )
+
+# model.config.vocab_size = tokenizer.vocab_size
+
 # ตรวจสอบว่า vocab_size ตรงกันหรือไม่
-assert tokenizer.vocab_size == model.config.vocab_size, "vocab_size ของ tokenizer และ model ไม่ตรงกัน"
+# assert tokenizer.vocab_size == model.config.vocab_size, "vocab_size ของ tokenizer และ model ไม่ตรงกัน"
+assert len( tokenizer ) == model.config.vocab_size, "vocab_size ของ tokenizer และ model ไม่ตรงกัน"
 
 
 # ส่งข้อมูลเข้าโมเดล

@@ -14,6 +14,16 @@ base_model = AutoModelForCausalLM.from_pretrained( model_name )
 if tokenizer.pad_token is None:
 	tokenizer.pad_token = tokenizer.eos_token
 
+#	ปรับขนาด embedding ของโมเดลให้สอดคล้องกับ tokenizer
+base_model.resize_token_embeddings(len(tokenizer))
+
+print( 'tokenizer:', len( tokenizer ) )
+print( 'base_model:', base_model.config.vocab_size )
+print( 'tokenizer:', tokenizer.vocab_size )
+
+#	ตรวจสอบขนาดของ vocab
+assert len( tokenizer ) == base_model.config.vocab_size, "Vocab size mismatch!"
+
 class LlamaForSequenceClassification( nn.Module ):
 
 	def __init__( self, base_model, num_labels ):
@@ -70,8 +80,8 @@ def prepare_data( file_paths ):
 
 	#	Create 'text' column by combine sender, receiver, subject, and body
 	combined_data[ 'text' ] = (
-		combined_data[ 'sender' ].fillna( '' ) + ' ' +
-		combined_data[ 'receiver' ].fillna( '' ) + ' ' +
+		# combined_data[ 'sender' ].fillna( '' ) + ' ' +
+		# combined_data[ 'receiver' ].fillna( '' ) + ' ' +
 		combined_data[ 'subject' ].fillna( '' ) + ' ' +
 		combined_data[ 'body' ].fillna( '' )
 	)
@@ -108,14 +118,14 @@ data = prepare_data( file_paths )
 encoded_data = data.map( preprocess_function, batched = True)
 
 training_args = TrainingArguments(
-	output_dir = "./llama-sequence-classification",
+	output_dir = "./llama-sequence-classification-new",
 	evaluation_strategy = "epoch",
 	learning_rate = 2e-5,
-	per_device_train_batch_size = 8,
-	per_device_eval_batch_size = 8,
+	per_device_train_batch_size = 4,
+	per_device_eval_batch_size = 4,
 	num_train_epochs = 3,
 	weight_decay = 0.01,
-	logging_dir = "./logs",
+	logging_dir = "./logs-new",
 	save_strategy = "epoch",
 	load_best_model_at_end = True,
 	save_safetensors = False
@@ -123,7 +133,7 @@ training_args = TrainingArguments(
 
 data_collator = DataCollatorForLanguageModeling(
 	tokenizer = tokenizer,
-	mlm = False,  # ใช้ False สำหรับ causal language modeling
+	mlm = True,  # ใช้ False สำหรับ causal language modeling
 )
 
 trainer = Trainer(
@@ -137,7 +147,7 @@ trainer = Trainer(
 
 trainer.train()
 
-trainer.save_model( "./llama-sequence-classification" )
-tokenizer.save_pretrained( "./llama-sequence-classification" )
+trainer.save_model( "./llama-sequence-classification-new" )
+tokenizer.save_pretrained( "./llama-sequence-classification-new" )
 # save_model( model, "./llama-sequence-classification-finish" )
 # model.save_pretrained( "./llama-pretrained-sequence-classification-finish" )
