@@ -7,6 +7,7 @@ import re
 import requests
 import os
 from dotenv import load_dotenv
+from huggingface_hub import login
 
 app = FastAPI()
 
@@ -19,15 +20,19 @@ app.add_middleware(
 	allow_headers=["*"],
 )
 
+#	Load .env
+load_dotenv( '../../.env' )
+hunterioApiKey = os.getenv( 'hunterio_apikey' )
+xApiKeys = os.getenv( 'x_apikey' )
+huggingfaceToken = os.getenv( 'huggingface_token' )
+
+# 	Login to Hugging Face
+login( token = huggingfaceToken )
+
 # 	Load Model & Tokenizer
 base_model = AutoModelForCausalLM.from_pretrained( "meta-llama/Llama-3.2-1B" )
 model = PeftModel.from_pretrained( base_model, "apkmew/LlamaPhishing" )
 tokenizer = AutoTokenizer.from_pretrained( "apkmew/LlamaPhishing" )
-
-#     Load .env
-load_dotenv( '../../.env' )
-hunterioApiKey = os.getenv( 'hunterio_apikey' )
-xApiKeys = os.getenv( 'x_apikey' )
 
 print( 'hunter.io API Key:', hunterioApiKey )
 print( 'VirusTotal API Key:', xApiKeys )
