@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from peft import PeftModel
@@ -8,6 +8,9 @@ import requests
 import os
 from dotenv import load_dotenv
 from huggingface_hub import login
+from email.parser import BytesParser
+from email import policy
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 
@@ -46,6 +49,10 @@ class EmailData( BaseModel ):
 	sender: str
 	subject: str
 	body: str
+ 
+class EmailFile(BaseModel):
+    fileName: str
+    content: str  # รับเนื้อหาไฟล์ .eml เป็น string
 
 ##############################################################
 #
@@ -177,6 +184,54 @@ def check_sender( sender ):
 
 	return True if score >= 70 else False
 
+def extract_email(header_value):
+    """Extract the email address from a header value."""
+    email_match = re.search(r'<([^>]+)>', header_value)
+    return email_match.group(1) if email_match else header_value.strip()
+
+def extract_body(msg):
+    """Extract the body of an email."""
+    body = ""
+    if msg.is_multipart():
+        for part in msg.iter_parts():
+            content_type = part.get_content_type()
+            try:
+                if content_type == "text/plain":
+                    body = part.get_payload(decode=True).decode(part.get_content_charset())
+                    break
+                elif content_type == "text/html":
+                    html_content = part.get_payload(decode=True).decode(part.get_content_charset())
+                    soup = BeautifulSoup(html_content, 'html.parser')
+                    body = soup.get_text()
+            except Exception as e:
+                print(f"Error processing part with content type {content_type}: {e}")
+    else:
+        content_type = msg.get_content_type()
+        try:
+            if content_type == "text/plain":
+                body = msg.get_payload(decode=True).decode(msg.get_content_charset())
+            elif content_type == "text/html":
+                html_content = msg.get_payload(decode=True).decode(msg.get_content_charset())
+                soup = BeautifulSoup(html_content, 'html.parser')
+                body = soup.get_text()
+        except Exception as e:
+            print(f"Error processing email body: {e}")
+
+    return body.strip() if body else "No body content found."
+
+def parse_eml_content(content: str):
+    """Parse the EML content and extract sender, subject, and body."""
+    try:
+        msg = BytesParser(policy=policy.default).parsebytes(content.encode())
+
+        sender = extract_email(msg["From"]) if msg["From"] else "No From found"
+        subject = msg["Subject"] if msg["Subject"] else "No Subject found"
+        body = extract_body(msg)
+
+        return sender, subject, body
+    except Exception as e:
+        return "Error", "Error", f"Parsing failed: {str(e)}"
+
 ##############################################################
 #
 #	API
@@ -212,3 +267,21 @@ def analyze_email( data: EmailData ):
 	result = isSenderInvalid or isMalicious or isPhishing
 
 	return { 'result': result }
+
+@app.post("/upload-email/")
+def upload_email(email_file: EmailFile):
+    sender, subject, body = parse_eml_content(email_file.content)
+
+    print("\n📨 Received Email File 📩")
+    print(f"📂 File Name: {email_file.fileName}")
+    print(f"📧 Sender: {sender}")
+    print(f"📜 Subject: {subject}")
+    print(f"📜 Body: {body[:1000]}...")  # แสดงเฉพาะ 1000 ตัวอักษรแรก เพื่อลด log ยาวเกินไป
+    print("\n-------------------------------\n")
+
+    return {
+        "message": "File processed successfully!",
+        "sender": sender,
+        "subject": subject,
+        "body": body
+    }
