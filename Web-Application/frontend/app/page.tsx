@@ -5,7 +5,6 @@ import axios from 'axios';
 import { FiRefreshCcw } from "react-icons/fi"; // 🔄 Import ไอคอน Reset
 
 export default function Page() {
-    const [file, setFile] = useState<File | null>(null);
     const [sender, setSender] = useState('');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
