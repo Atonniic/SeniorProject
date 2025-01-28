@@ -24,7 +24,6 @@ export default function Page() {
         if (e.target.files && e.target.files.length > 0) {
             resetForm(); // ✅ รีเซ็ตค่าเมื่อเลือกไฟล์ใหม่
             const selectedFile = e.target.files[0];
-            setFile(selectedFile);
 
             const reader = new FileReader();
             reader.onload = async (event) => {
