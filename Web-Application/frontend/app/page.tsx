@@ -204,7 +204,7 @@ export default function Page() {
                     </div>
                 )}
                 
-                {/* ✅ แสดงผลลัพธ์ของการตรวจสอบ */}
+                {/* ✅ แสดงผลลัพธ์ของการตรวจสอบบ */}
                 {result !== null && (
                     <div className={`mt-4 p-4 rounded text-center font-bold text-lg ${result.result ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
                         {result.result ? '🚨 Phishing Email Detected! 🚨' : '✅ Good Email ✅'}
