@@ -59,30 +59,15 @@ export default function Page() {
         try {
             const response = await axios.post('http://localhost:8000/analyze-email', { sender, subject, body });
             setResult(response.data);
-        } catch (error: any) {
-            console.error("🚨 API Request Failed:", error);
-    
-            let errorMessage = "An unexpected error occurred. Please try again later.";
-    
-            // ตรวจสอบว่า error มาจาก Axios หรือไม่
+        }
+        catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-                if (error.response) {
-                    // ✅ Server ตอบกลับแต่มีปัญหา (เช่น HTTP 400, 500)
-                    console.error("📢 Server Error:", error.response.data);
-                    errorMessage = `Server Error: ${error.response.status} - ${error.response.statusText}`;
-                } else if (error.request) {
-                    // ✅ ไม่มีการตอบกลับจากเซิร์ฟเวอร์ (เช่น API ไม่ทำงาน)
-                    console.error("🔌 No response received:", error.request);
-                    errorMessage = "Failed to connect to the server. Please check your internet connection.";
-                }
+                console.error("📢 Axios Error:", error.response?.data || error.message);
+            } else if (error instanceof Error) {
+                console.error("⚠️ General Error:", error.message);
             } else {
-                // ✅ Error ที่ไม่ได้มาจาก Axios
-                console.error("⚠️ Unknown Error:", error.message);
-                errorMessage = error.message;
+                console.error("❌ Unknown Error", error);
             }
-    
-            // แสดงข้อผิดพลาดใน UI
-            alert(errorMessage); // ✅ แจ้งเตือนผู้ใช้
         }
     };
 
