@@ -30,6 +30,8 @@ export default function Page() {
         }
     };
 
+    const backendURL = "/api/";
+
     // 📂 ฟังก์ชันอ่านไฟล์ EML
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -43,7 +45,7 @@ export default function Page() {
             if (!event.target?.result) return;
             const content = event.target.result as string;
             try {
-                const response = await axios.post('http://188.166.210.66/upload-email/', {
+                const response = await axios.post('/api/upload-email/', {
                     fileName: selectedFile.name,
                     content: content
                 });
@@ -62,7 +64,7 @@ export default function Page() {
     useEffect(() => {
         const checkBackend = async () => {
             try {
-                await axios.get('http://188.166.210.66/');
+                await axios.get('/api/');
                 setBackendStatus('connected');
             } catch {
                 setBackendStatus('disconnected');
@@ -79,7 +81,7 @@ export default function Page() {
         setErrorMessage(null);
         try {
             setBackendStatus('pending'); // 🟡 รอผล
-            const response = await axios.post('http://188.166.210.66/analyze-email', { sender, subject, body });
+            const response = await axios.post('/api/analyze-email', { sender, subject, body });
             setResult(response.data);
             setBackendStatus('connected'); // ✅ เชื่อมต่อสำเร็จ
         } catch (error) {
