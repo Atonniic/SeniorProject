@@ -21,7 +21,7 @@ export async function uploadEmail(fileName: string, content: string) {
 // 🔍 Analyze Email
 export async function analyzeEmail(sender: string, subject: string, body: string) {
     try {
-        const response = await axios.post(`${backendURL}/analyze-email`, { sender, subject, body });
+        const response = await axios.post(`${backendURL}/analyze-email/`, { sender, subject, body });
         return response.data;
     } catch (error) {
         console.error("❌ Error analyzing email:", error);
