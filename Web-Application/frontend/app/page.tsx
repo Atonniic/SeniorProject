@@ -141,15 +141,32 @@ export default function Page() {
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium">Sender:</label>
-                        <input type="text" value={sender} readOnly className="w-full border rounded p-3 bg-gray-100" />
+                    <input
+                        type="text"
+                        value={sender}
+                        onChange={(e) => isManualMode ? setSender(e.target.value) : null}
+                        readOnly={!isManualMode ? true : false}
+                        className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                    />                    
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Subject:</label>
-                        <input type="text" value={subject} readOnly className="w-full border rounded p-3 bg-gray-100" />
+                        <input
+                            type="text"
+                            value={subject}
+                            onChange={(e) => isManualMode ? setSubject(e.target.value) : null}
+                            readOnly={!isManualMode}
+                            className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Body:</label>
-                        <textarea value={body} readOnly className="w-full border rounded p-3 bg-gray-100 h-40" />
+                        <textarea
+                            value={body}
+                            onChange={(e) => isManualMode ? setBody(e.target.value) : null}
+                            readOnly={!isManualMode}
+                            className={`w-full border rounded p-3 h-40 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />
                     </div>
                 </div>
 
