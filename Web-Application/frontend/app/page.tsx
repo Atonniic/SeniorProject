@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { FiRefreshCcw } from 'react-icons/fi';
 import { FaGlobe, FaFolderOpen } from 'react-icons/fa';
+import { uploadEmail, analyzeEmail, checkBackend } from './api/action';  // Import Server Actions
 
 export default function Page() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -16,7 +16,7 @@ export default function Page() {
     const [backendStatus, setBackendStatus] = useState<'connected' | 'pending' | 'disconnected'>('pending');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // 🔄 รีเซ็ตค่าทั้งหมด
+    // 🔄 Reset Form
     const resetForm = () => {
         setFileName('');
         setSender('');
@@ -30,10 +30,8 @@ export default function Page() {
         }
     };
 
-    const backendURL = "/api/";
-
-    // 📂 ฟังก์ชันอ่านไฟล์ EML
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 📂 Handle File Upload
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
 
@@ -45,14 +43,10 @@ export default function Page() {
             if (!event.target?.result) return;
             const content = event.target.result as string;
             try {
-                const response = await axios.post('/api/upload-email/', {
-                    fileName: selectedFile.name,
-                    content: content
-                });
-
-                setSender(response.data.sender);
-                setSubject(response.data.subject);
-                setBody(response.data.body);
+                const response = await uploadEmail(selectedFile.name, content);  // ใช้ Server Action
+                setSender(response.sender);
+                setSubject(response.subject);
+                setBody(response.body);
             } catch (error) {
                 console.error("❌ Error uploading file:", error);
             }
@@ -60,38 +54,34 @@ export default function Page() {
         reader.readAsText(selectedFile);
     };
 
-    // 🌐 ตรวจสอบสถานะ Backend ทุก 10 วินาที
+    // 🌐 Check Backend Connection (Runs Every 10s)
     useEffect(() => {
-        const checkBackend = async () => {
-            try {
-                await axios.get('/api/');
-                setBackendStatus('connected');
-            } catch {
-                setBackendStatus('disconnected');
-            }
+        const checkConnection = async () => {
+            const status = await checkBackend();
+            setBackendStatus(status);
         };
 
-        checkBackend();
-        const interval = setInterval(checkBackend, 10000);
+        checkConnection();
+        const interval = setInterval(checkConnection, 10000);
         return () => clearInterval(interval);
     }, []);
 
-    // 🔍 ฟังก์ชัน Analyze Email
+    // 🔍 Analyze Email
     const handleAnalyze = async () => {
         setErrorMessage(null);
         try {
-            setBackendStatus('pending'); // 🟡 รอผล
-            const response = await axios.post('/api/analyze-email', { sender, subject, body });
-            setResult(response.data);
-            setBackendStatus('connected'); // ✅ เชื่อมต่อสำเร็จ
+            setBackendStatus('pending');
+            const response = await analyzeEmail(sender, subject, body); // ใช้ Server Action
+            setResult(response);
+            setBackendStatus('connected');
         } catch (error) {
             console.error('❌ Error analyzing email:', error);
-            setBackendStatus('disconnected'); // ❌ เชื่อมต่อไม่ได้
-            setErrorMessage("⚠️ Unable to connect to the backend. Please try again."); // 🛑 แจ้งเตือน
+            setBackendStatus('disconnected');
+            setErrorMessage("⚠️ Unable to connect to the backend. Please try again.");
         }
     };
 
-    // 🎨 กำหนดสีไอคอนโลกตามสถานะ backend
+    // 🎨 Set Globe Icon Color
     const globeColor =
         backendStatus === 'connected' ? 'text-green-500' :
         backendStatus === 'pending' ? 'text-gray-400 animate-spin' :
@@ -104,7 +94,7 @@ export default function Page() {
                     <span>📩 Upload and Analyze EML File</span>
                 </h1>
 
-                {/* 📂 ปุ่มเลือกไฟล์ */}
+                {/* 📂 File Upload */}
                 {!isManualMode && (
                     <div className="mb-4 flex items-center gap-2">
                         <button
@@ -122,14 +112,14 @@ export default function Page() {
                         />
                         <input
                             type="text"
-                            value={fileName || 'ไม่ได้เลือกไฟล์ใด'}
+                            value={fileName || 'No file selected'}
                             readOnly
                             className="border rounded p-2 w-full bg-gray-100"
                         />
                     </div>
                 )}
 
-                {/* 🔥 ปุ่มเลื่อน Toggle Mode */}
+                {/* 🔥 Toggle Mode */}
                 <div className="flex items-center justify-center mb-6">
                     <span className="mr-3 text-gray-600 text-sm">File Upload</span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -147,66 +137,41 @@ export default function Page() {
                     <span className="ml-3 text-gray-600 text-sm">Manual Mode</span>
                 </div>
 
-                {/* 📝 ช่องกรอก Sender, Subject, Body */}
+                {/* 📝 Input Fields */}
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium">Sender:</label>
-                        <input
-                            type="text"
-                            value={sender}
-                            onChange={(e) => isManualMode && setSender(e.target.value)}
-                            readOnly={!isManualMode}
-                            className="w-full border rounded p-3 bg-gray-100"
-                        />
+                        <input type="text" value={sender} readOnly className="w-full border rounded p-3 bg-gray-100" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Subject:</label>
-                        <input
-                            type="text"
-                            value={subject}
-                            onChange={(e) => isManualMode && setSubject(e.target.value)}
-                            readOnly={!isManualMode}
-                            className="w-full border rounded p-3 bg-gray-100"
-                        />
+                        <input type="text" value={subject} readOnly className="w-full border rounded p-3 bg-gray-100" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Body:</label>
-                        <textarea
-                            value={body}
-                            onChange={(e) => isManualMode && setBody(e.target.value)}
-                            readOnly={!isManualMode}
-                            className="w-full border rounded p-3 bg-gray-100 h-40"
-                        />
+                        <textarea value={body} readOnly className="w-full border rounded p-3 bg-gray-100 h-40" />
                     </div>
                 </div>
 
-                {/* 🔍 ปุ่ม Analyze + 🌍 ไอคอน Backend Status */}
+                {/* 🔍 Analyze Button */}
                 <div className="flex items-center justify-between mt-6">
                     <FaGlobe className={`mr-2 text-6xl ${globeColor}`} />
-                    <button
-                        onClick={handleAnalyze}
-                        disabled={!sender || !subject || !body}
-                        className={`w-full py-3 rounded text-lg 
-                            ${!sender || !subject || !body ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
-                    >
+                    <button onClick={handleAnalyze} className="bg-blue-500 text-white w-full py-3 rounded text-lg hover:bg-blue-600">
                         Analyze
                     </button>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="bg-gray-500 text-white ml-2 p-3 rounded-full hover:bg-gray-600"
-                    >
+                    <button onClick={() => window.location.reload()} className="bg-gray-500 text-white ml-2 p-3 rounded-full hover:bg-gray-600">
                         <FiRefreshCcw size={24} />
                     </button>
                 </div>
 
-                {/* 🛑 แสดงข้อความแจ้งเตือนเมื่อเชื่อมต่อ Backend ไม่ได้ */}
+                {/* 🛑 Display Backend Connection Error */}
                 {errorMessage && (
                     <div className="mt-4 p-4 rounded bg-yellow-300 text-gray-800 text-center font-semibold">
                         {errorMessage}
                     </div>
                 )}
                 
-                {/* ✅ แสดงผลลัพธ์ของการตรวจสอบบ */}
+                {/* ✅ Display Analysis Result */}
                 {result !== null && (
                     <div className={`mt-4 p-4 rounded text-center font-bold text-lg ${result.result ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
                         {result.result ? '🚨 Phishing Email Detected! 🚨' : '✅ Good Email ✅'}
