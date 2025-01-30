@@ -9,6 +9,7 @@ export default function Page() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [fileName, setFileName] = useState('');
     const [sender, setSender] = useState('');
+    const [datetime, setDatetime] = useState('');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [result, setResult] = useState<{ result?: boolean } | null>(null);
@@ -20,6 +21,7 @@ export default function Page() {
     const resetForm = () => {
         setFileName('');
         setSender('');
+        setDatetime('');
         setSubject('');
         setBody('');
         setResult(null);
@@ -45,6 +47,7 @@ export default function Page() {
             try {
                 const response = await uploadEmail(selectedFile.name, content);  // ใช้ Server Action
                 setSender(response.sender);
+                setDatetime(response.datetime);
                 setSubject(response.subject);
                 setBody(response.body);
             } catch (error) {
@@ -141,13 +144,23 @@ export default function Page() {
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium">Sender:</label>
-                    <input
-                        type="text"
-                        value={sender}
-                        onChange={(e) => isManualMode ? setSender(e.target.value) : null}
-                        readOnly={!isManualMode ? true : false}
-                        className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
-                    />                    
+                        <input
+                            type="text"
+                            value={sender}
+                            onChange={(e) => isManualMode ? setSender(e.target.value) : null}
+                            readOnly={!isManualMode ? true : false}
+                            className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />                    
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium">Datetime:</label>
+                        <input
+                            type="datetime-local"
+                            value={datetime}
+                            onChange={(e) => isManualMode ? setDatetime(e.target.value) : null}
+                            readOnly={!isManualMode ? true : false}
+                            className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />                    
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Subject:</label>

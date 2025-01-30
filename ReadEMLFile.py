@@ -3,6 +3,7 @@ from email.parser import BytesParser
 import argparse
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 def ExtractURLs( text ):
     '''Extract URLs from string.'''
@@ -47,6 +48,20 @@ def ExtractEmail( headerValue ):
     else:
         return headerValue.strip()  # Return as-is if no <>
     
+def ConvertDate( dateStr ):
+	'''	Convert date string
+	'''
+
+	try:
+		#	Parse the input date string with the given format
+		parsedDate = datetime.strptime( dateStr, '%a, %d %b %Y %H:%M:%S %z' )
+
+	except ValueError:
+		return None
+
+	#	Convert to desired format 'YYYY-MM-DD'
+	return parsedDate.strftime( '%Y-%m-%d %H:%M:%S' )    
+    
 def ParseEML( filePath ):
     with open( filePath, 'rb' ) as emlFile:
         msg = BytesParser( policy=policy.default ).parse( emlFile )
@@ -56,6 +71,7 @@ def ParseEML( filePath ):
 
     print( f"From        -> { fromEmail }" )
     print( f"Subject     -> { msg[ 'Subject' ] }" )
+    print( f"Date        -> { ConvertDate( msg[ 'Date' ] ) }" )
     print( f"URLs        -> { ExtractURLs( GetBody( msg ) ) if GetBody( msg ) else 'No URLs found' }" )
     print( f"Body        ->\n{ GetBody( msg ) if GetBody( msg ) else 'No body found' }" )
 
