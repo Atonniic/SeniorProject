@@ -144,23 +144,23 @@ export default function Page() {
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium">Sender:</label>
-                    <input
-                        type="text"
-                        value={sender}
-                        onChange={(e) => isManualMode ? setSender(e.target.value) : null}
-                        readOnly={!isManualMode ? true : false}
-                        className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
-                    />                    
+                        <input
+                            type="text"
+                            value={sender}
+                            onChange={(e) => isManualMode ? setSender(e.target.value) : null}
+                            readOnly={!isManualMode ? true : false}
+                            className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />                    
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">datetime:</label>
-                    <input
-                        type="datetime-local"
-                        value={datetime}
-                        onChange={(e) => isManualMode ? setDatetime(e.target.value) : null}
-                        readOnly={!isManualMode ? true : false}
-                        className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
-                    />                    
+                        <label className="block text-sm font-medium">Datetime:</label>
+                        <input
+                            type="datetime-local"
+                            value={datetime}
+                            onChange={(e) => isManualMode ? setDatetime(e.target.value) : null}
+                            readOnly={!isManualMode ? true : false}
+                            className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
+                        />                    
                     </div>
                     <div>
                         <label className="block text-sm font-medium">Subject:</label>
