@@ -74,7 +74,7 @@ export default function Page() {
         setErrorMessage(null);
         try {
             setBackendStatus('pending');
-            const response = await analyzeEmail(sender, subject, body); // ใช้ Server Action
+            const response = await analyzeEmail(sender, datetime, subject, body); // ใช้ Server Action
             setResult(response);
             setBackendStatus('connected');
         } catch (error) {
