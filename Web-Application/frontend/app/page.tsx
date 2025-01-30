@@ -9,7 +9,7 @@ export default function Page() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [fileName, setFileName] = useState('');
     const [sender, setSender] = useState('');
-    const [date, setDate] = useState('');
+    const [datetime, setDatetime] = useState('');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [result, setResult] = useState<{ result?: boolean } | null>(null);
@@ -21,7 +21,7 @@ export default function Page() {
     const resetForm = () => {
         setFileName('');
         setSender('');
-        setDate('');
+        setDatetime('');
         setSubject('');
         setBody('');
         setResult(null);
@@ -47,7 +47,7 @@ export default function Page() {
             try {
                 const response = await uploadEmail(selectedFile.name, content);  // ใช้ Server Action
                 setSender(response.sender);
-                setDate(response.date);
+                setDatetime(response.datetime);
                 setSubject(response.subject);
                 setBody(response.body);
             } catch (error) {
@@ -153,11 +153,11 @@ export default function Page() {
                     />                    
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">Date:</label>
+                        <label className="block text-sm font-medium">datetime:</label>
                     <input
                         type="datetime-local"
-                        value={date}
-                        onChange={(e) => isManualMode ? setDate(e.target.value) : null}
+                        value={datetime}
+                        onChange={(e) => isManualMode ? setDatetime(e.target.value) : null}
                         readOnly={!isManualMode ? true : false}
                         className={`w-full border rounded p-3 ${isManualMode ? "bg-white" : "bg-gray-100"}`}
                     />                    

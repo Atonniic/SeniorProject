@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -219,6 +220,21 @@ def extract_body(msg):
 
     return body.strip() if body else "No body content found."
 
+def ConvertDate( dateStr ):
+	'''	Convert date string
+	'''
+
+	try:
+		#	Parse the input date string with the given format
+		parsedDate = datetime.strptime( dateStr, '%a, %d %b %Y %H:%M:%S %z' )
+
+	except ValueError:
+		return None
+
+	#	Convert to desired format 'YYYY-MM-DD'
+	return parsedDate.strftime( '%Y-%m-%d %H:%M:%S' )    
+
+
 def parse_eml_content(content: str):
     """Parse the EML content and extract sender, subject, and body."""
     try:
@@ -227,8 +243,9 @@ def parse_eml_content(content: str):
         sender = extract_email(msg["From"]) if msg["From"] else "No From found"
         subject = msg["Subject"] if msg["Subject"] else "No Subject found"
         body = extract_body(msg)
+        datetime = ConvertDate(msg["Date"]) if msg["Date"] else "No Date found"
 
-        return sender, subject, body
+        return sender, subject, body, datetime
     except Exception as e:
         return "Error", "Error", f"Parsing failed: {str(e)}"
 
@@ -246,6 +263,7 @@ def analyze_email( data: EmailData ):
 
 	sender = data.sender
 	predText = data.subject + " " + data.body
+ 	datetime = data.datetime
 
 	# 	Check the sender email
 	isSenderInvalid = not check_sender( sender )
@@ -270,11 +288,12 @@ def analyze_email( data: EmailData ):
 
 @app.post("/upload-email/")
 def upload_email(email_file: EmailFile):
-    sender, subject, body = parse_eml_content(email_file.content)
+    sender, subject, body, datetime = parse_eml_content(email_file.content)
 
     print("\n📨 Received Email File 📩")
     print(f"📂 File Name: {email_file.fileName}")
     print(f"📧 Sender: {sender}")
+    print(f"📅 Date: {datetime}")
     print(f"📜 Subject: {subject}")
     print(f"📜 Body: {body[:1000]}...")  # แสดงเฉพาะ 1000 ตัวอักษรแรก เพื่อลด log ยาวเกินไป
     print("\n-------------------------------\n")
@@ -282,6 +301,7 @@ def upload_email(email_file: EmailFile):
     return {
         "message": "File processed successfully!",
         "sender": sender,
+        "datetime": datetime,
         "subject": subject,
         "body": body
     }
