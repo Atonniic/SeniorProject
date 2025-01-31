@@ -194,6 +194,16 @@ export default function Page() {
                     </button>
                 </div>
 
+                {/* 📊 ลิงก์ไปยัง Dashboard */}
+                <div className="flex items-center justify-center mt-4">
+                    <h1 className="text-2xl font-bold text-center flex items-center gap-2">
+                        <span>📊</span>
+                        <a href="http://34.41.68.246:3000/public-dashboards/9b2ad83572b04d25a41d6217f6037673" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                            Dashboard
+                        </a>
+                    </h1>
+                </div>
+
                 {/* 🛑 Display Backend Connection Error */}
                 {errorMessage && (
                     <div className="mt-4 p-4 rounded bg-yellow-300 text-gray-800 text-center font-semibold">
